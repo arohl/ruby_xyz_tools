@@ -16,14 +16,16 @@ class Atom
 end
 
 
-#open xyz file
-xyz_filename = ARGV.pop
+# open xyz file
+xyz_filename = ARGV[0]
 xyz_file = File.new(xyz_filename, "r")
 
-#open output files
-z_file = File.new("z_angles.txt", "w")
-xy_file = File.new("xy_angles.txt", "w")
+# get components of vector to do angle with
+x = ARGV[1].to_f
+y = ARGV[2].to_f
+vec = Vector[x, y, 0].normalize
 
+puts vec
 
 # Hash to store frames
 xyz_frames = Array.new
@@ -59,51 +61,24 @@ frame = xyz_frames[0]
 n_mols = natoms/2 - 8
 n_rows = n_mols/2
 
-x_vector = Vector[1, 0, 0]
-z_vector = Vector[0, 0, 1]
 mol_orig = Array.new
 angle_orig = Array.new
 mol = Array.new
-
-# calculate change in angle to z axis
 
 # calculate the region 1 molecule angles from the first frame
 frame = xyz_frames[0]
 for i in 0..n_rows-1 do
 	mol_orig[i] = (frame[i*4].coord - frame[i*4+2].coord).normalize
-	angle_orig[i] = Math.acos(mol_orig[i].dot z_vector)*180/Math::PI
+	angle_orig[i] = Math.acos(mol_orig[i].dot vec)*180/Math::PI
 end
-# loop over all frames calculating dot product with [0 0 1]
+# loop over all frames calculating dot product with vector
 xyz_frames.each do|f|
   # region 1 atoms are the first atoms in each frame
 	for i in 0..n_rows-1 do
 		mol[i] = (f[i*4].coord - f[i*4+2].coord).normalize
-		angle = Math.acos(mol[i].dot z_vector)*180/Math::PI - angle_orig[i]
-		z_file.print "%8.2f " % [angle]
+		angle = Math.acos(mol[i].dot vec)*180/Math::PI - angle_orig[i]
+		print "%8.2f " % [angle]
 	end
-	z_file.print "\n"
-end
-
-# now project molecule onto xy plane and calculate change in angle to x-axis
-
-# calculate the region 1 molecule angles from the first frame
-frame = xyz_frames[0]
-for i in 0..n_rows-1 do
-  tmp = (frame[i*4].coord - frame[i*4+2].coord)
-  vec = Vector[tmp[0], tmp[1], 0.0]
-	mol_orig[i] = vec.normalize
-	angle_orig[i] = Math.acos(mol_orig[i].dot x_vector)*180/Math::PI
-end
-# loop over all frames calculating dot product with [0 0 1]
-xyz_frames.each do|f|
-  # region 1 atoms are the first atoms in each frame
-	for i in 0..n_rows-1 do
- 	  tmp = (f[i*4].coord - f[i*4+2].coord)
-		vec = Vector[tmp[0], tmp[1], 0.0]
-		mol[i] = vec.normalize
-		angle = Math.acos(mol[i].dot x_vector)*180/Math::PI - angle_orig[i]
-		xy_file.print "%8.2f " % [angle]
-	end
-	xy_file.print "\n"
+	print "\n"
 end
 
